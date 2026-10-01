@@ -1,0 +1,2 @@
+pyobjc-framework-Quartz==12.2.2
+pyserial==3.5

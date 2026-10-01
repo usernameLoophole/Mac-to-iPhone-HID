@@ -1,0 +1,40 @@
+# Edits are picked up live (checked once a second). A mistake is reported in
+# the terminal and the previous config stays active.
+# Targets: A B X Y LB RB LS RS View Menu Share LT RT DU DD DL DR
+#          LS_UP LS_DOWN LS_LEFT LS_RIGHT
+# Match these to your in-game controller layout (Fortnite: Settings -> Controller).
+
+[keys]
+w = "LS_UP"
+s = "LS_DOWN"
+a = "LS_LEFT"
+d = "LS_RIGHT"
+shift = "LS"      # sprint
+space = "A"       # jump
+c = "RS"          # crouch
+r = "X"           # reload
+e = "X"           # interact (hold)
+q = "Y"
+f = "RS"
+tab = "View"      # map / inventory
+esc = "Menu"
+"1" = "DU"
+"2" = "DR"
+"3" = "DD"
+"4" = "DL"
+
+[mouse]
+left = "RT"       # fire
+right = "LT"      # aim down sights
+middle = "RS"
+# side buttons, if your mouse has them: button4 = "...", button5 = "..."
+wheel_up = "LB"   # previous weapon (short press)
+wheel_down = "RB" # next weapon (short press)
+wheel_pulse_ms = 60
+
+[aim]
+full_speed = 1800 # mouse counts/s that give full right-stick deflection (lower = more sensitive)
+gamma = 1.2       # <1 boosts small movements, >1 dampens them
+deadzone = 0.33   # Fortnite iOS real right-stick dead zone is ~32% (measured with probe.py)
+window_ms = 40    # smoothing window; longer = smoother but laggier
+y_ratio = 1.0     # vertical sensitivity relative to horizontal
