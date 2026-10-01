@@ -1,2 +1,2 @@
-pyobjc-framework-Quartz==12.2.2
+pyobjc-framework-Quartz==12.2.2; sys_platform == "darwin"
 pyserial==3.5

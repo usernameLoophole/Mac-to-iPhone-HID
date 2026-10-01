@@ -1,0 +1,12 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer (non-interactive, also runs the selftest)
+        run: REPO_URL="$GITHUB_WORKSPACE" INSTALL_DIR="$RUNNER_TEMP/inst" NONINTERACTIVE=1 bash install.sh
+      - name: Firmware build
+        run: '"$RUNNER_TEMP/inst/host/.venv/bin/pio" run -d "$RUNNER_TEMP/inst/firmware"'

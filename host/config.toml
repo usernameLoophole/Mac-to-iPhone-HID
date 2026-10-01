@@ -3,6 +3,13 @@
 # Targets: A B X Y LB RB LS RS View Menu Share LT RT DU DD DL DR
 #          LS_UP LS_DOWN LS_LEFT LS_RIGHT
 # Match these to your in-game controller layout (Fortnite: Settings -> Controller).
+#
+# Key names: a-z 0-9 space tab return esc delete caps left right up down f1-f12
+#   shift ctrl alt meta (meta = Cmd / Win / Super; rshift rctrl ralt rmeta = right-hand side)
+#   ` - = [ ] \ ; ' , . /      (physical US-layout positions)
+
+# Toggle forwarding. Default: ctrl+alt+meta+k (macOS/Linux), ctrl+alt+shift+k (Windows).
+# hotkey = "ctrl+alt+meta+k"
 
 [keys]
 w = "LS_UP"

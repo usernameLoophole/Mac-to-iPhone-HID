@@ -1,5 +1,7 @@
 # Mac-to-iPhone-HID
 
+[![CI](https://github.com/usernameLoophole/Mac-to-iPhone-HID/actions/workflows/ci.yml/badge.svg)](https://github.com/usernameLoophole/Mac-to-iPhone-HID/actions/workflows/ci.yml)
+
 Play iPhone games with your Mac's keyboard and mouse. An ESP32-S3 shows up on
 the iPhone as an **Xbox Wireless Controller**. A small Python script on the Mac
 turns key presses and mouse movement into controller input.
@@ -107,7 +109,8 @@ Everything is in [`host/config.toml`](host/config.toml). Saved changes apply wit
 | Tab · Esc | View · Menu |
 | 1 2 3 4 | D-pad ↑ → ↓ ← |
 
-Change them to match your in-game controller layout. Controller targets you can
+Change them to match your in-game controller layout. The toggle hotkey can be
+changed too (`hotkey = "ctrl+alt+meta+k"`, where meta = Cmd). Controller targets you can
 use: `A B X Y LB RB LS RS View Menu Share LT RT DU DD DL DR LS_UP LS_DOWN LS_LEFT LS_RIGHT`.
 
 ## Aim settings
@@ -184,8 +187,9 @@ Match the button layout to [`host/config.toml`](host/config.toml), or the other 
 
 ## How it works
 
-- **`host/bridge.py`** captures keyboard and mouse with a macOS event tap. While
-  forwarding is on, it hides them from the Mac and freezes the cursor. Every 8 ms
+- **`host/capture/`** reads keyboard and mouse, one file per OS. On macOS it's an
+  event tap. While forwarding is on, it hides the input from the Mac and freezes the cursor.
+- **`host/bridge.py`** is the OS-independent core: bindings, hotkey and aim. Every 8 ms
   it sends the **whole controller state** as one 15-byte message over USB serial.
 - **`firmware/`** (ESP32-S3) reads those messages and sends them to the iPhone
   as a Bluetooth controller. It uses the Xbox Series X mode of
@@ -227,7 +231,8 @@ firmware/
   src/main.cpp              USB-serial → controller bridge
   lib/ESP32-BLE-Gamepad/    vendored library (MIT), unmodified
 host/
-  bridge.py                 Mac capture, bindings, aim
+  bridge.py                 core: bindings, aim, hotkey, sending (OS-independent)
+  capture/macos.py          macOS keyboard/mouse capture (one file per OS)
   config.toml               your bindings and aim settings
   requirements.txt          pinned Python packages
   sweep.py                  hardware test: exercises every input

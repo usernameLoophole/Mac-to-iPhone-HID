@@ -4,16 +4,14 @@ amounts, 3 s each. Note the first % where the camera starts turning and set
 
     .venv/bin/python probe.py [start% [end% [step%]]]     default: 4 30 2
 """
-import glob, sys, time
+import sys, time
 import serial
-from bridge import frame
+from bridge import find_port, frame
 
 a = [float(x) for x in sys.argv[1:4]] + [4, 30, 2][len(sys.argv[1:4]):]
+del sys.argv[1:]  # the numbers above are not a serial port
 start, end, step = a
-ports = glob.glob("/dev/cu.usbmodem*")
-if not ports:
-    sys.exit("ESP32 not found: plug it into the board's USB port.")
-s = serial.Serial(ports[0])
+s = serial.Serial(find_port())
 for b in (1, 0):  # tap A so the controller is active
     for _ in range(25):
         s.write(frame(buttons=b)); time.sleep(0.008)

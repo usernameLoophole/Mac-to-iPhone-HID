@@ -1,16 +1,12 @@
 """Hardware check: sweeps sticks/triggers and presses each button once (never Guide/Share).
 Watch https://hardwaretester.com/gamepad on the iPhone. Stop bridge.py first (it shares the port)."""
-import glob, math, sys, time
+import math, time
 import serial
-from bridge import frame
+from bridge import find_port, frame
 
 NAMES = ["A", "B", "X", "Y", "LB", "RB", "LS", "RS", "View", "Menu"]  # bits 0..9
 
-ports = sys.argv[1:2] or glob.glob("/dev/cu.usbmodem*")
-if not ports:
-    sys.exit("ESP32 not found: plug it into the board's USB port (or pass the port as an argument).")
-port = ports[0]
-s = serial.Serial(port)
+s = serial.Serial(find_port())
 print("tap A (browsers only expose a gamepad after a button press)")
 for b in (1, 0, 1, 0):
     for _ in range(25):
