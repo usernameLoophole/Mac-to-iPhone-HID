@@ -24,46 +24,60 @@ Mac keyboard + mouse ──USB──▶ ESP32-S3 ──Bluetooth LE──▶ iPh
 | | |
 |---|---|
 | Board | An **ESP32-S3** dev board with a native USB port (often labelled `USB`, next to a `UART`/`COM` port). Other ESP32s have no native USB and won't work as-is |
-| Mac | macOS with Python **3.11+** and [PlatformIO](https://platformio.org/) (`brew install platformio`) |
+| Mac | macOS with Python **3.11+** (the installer can get it through Homebrew) |
 | Phone | iPhone (or iPad) that supports Xbox controllers |
 | Cable | USB cable from the Mac to the board's **USB** port |
 
 ## Installation
 
-### 1. Flash the firmware (once)
+### Quick install
+
+Plug the ESP32-S3 into your Mac, then paste this into Terminal:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/usernameLoophole/Mac-to-iPhone-HID/main/install.sh | bash
+```
+
+The script:
+1. Checks for git and Python 3.11+, and installs what's missing.
+2. Clones the repo into `~/Mac-to-iPhone-HID`.
+3. Creates a private Python environment containing the bridge's packages and PlatformIO.
+4. Runs the self-test.
+5. Offers to flash the firmware. The first build downloads ~500 MB of tools.
+6. Opens the macOS permission pages you need.
+
+Running it again is safe: it updates the folder and skips what's already done.
+Set `INSTALL_DIR=/some/path` to install somewhere else.
+[Read the script](install.sh) before running it if you like. It's short.
+
+`firmware/platformio.ini` is set up for 8 MB flash modules (e.g. `…N8R2`). For a
+4 MB module, delete the two `flash_size`/`partitions` lines and flash again
+(command below).
+
+### Manual install
 
 ```sh
 git clone https://github.com/usernameLoophole/Mac-to-iPhone-HID.git
-cd Mac-to-iPhone-HID/firmware
-pio run -t upload
+cd Mac-to-iPhone-HID
+python3 -m venv host/.venv
+host/.venv/bin/pip install -r host/requirements.txt -r firmware/requirements.txt
+host/.venv/bin/python host/bridge.py --selftest     # should print "selftest ok"
+host/.venv/bin/pio run -d firmware -t upload        # flash the ESP32-S3
 ```
 
-`platformio.ini` is set up for 8 MB flash modules (e.g. `…N8R2`). For a 4 MB
-module, delete the two `flash_size`/`partitions` lines first.
+### After installing (once)
 
-### 2. Pair with the iPhone (once)
-
-iPhone → **Settings → Bluetooth** → tap **Xbox Wireless Controller**.
-Afterwards, **Settings → General → Game Controller** should appear.
-
-### 3. Set up the Mac script (once)
-
-```sh
-cd host
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python bridge.py --selftest      # should print "selftest ok"
-```
-
-Then open **System Settings → Privacy & Security** and turn on **Terminal**
-under both **Input Monitoring** and **Accessibility**. Quit and reopen Terminal.
+1. **Permissions:** System Settings → Privacy & Security → turn on **Terminal** under
+   both **Input Monitoring** and **Accessibility**. Then quit and reopen Terminal.
+2. **Pairing:** iPhone → **Settings → Bluetooth** → tap **Xbox Wireless Controller**.
+   Afterwards, **Settings → General → Game Controller** should appear.
 
 ## Usage
 
 1. Plug in the board. The iPhone reconnects to it on its own.
 2. In **Terminal.app** (it won't work over SSH):
    ```sh
-   cd host && .venv/bin/python bridge.py
+   ~/Mac-to-iPhone-HID/start.sh
    ```
 3. Press **Ctrl+Opt+Cmd+K** to send keyboard and mouse to the iPhone. Press it again to get them back.
 
@@ -71,7 +85,8 @@ Quit with Ctrl+C. **If you ever get stuck, unplug the board:** the script exits
 and gives your keyboard and mouse back.
 
 To check that the iPhone receives input without a game, open
-<https://hardwaretester.com/gamepad> in Safari and run `.venv/bin/python sweep.py`.
+<https://hardwaretester.com/gamepad> in Safari and run
+`host/.venv/bin/python host/sweep.py` from the project folder.
 It moves every stick and presses every button once.
 
 ## Configuration
@@ -128,7 +143,7 @@ aim, lower the game's look speed (see below) and then lower `full_speed` to
 win back fast turns.
 
 **Measuring a game's real dead zone:** stop `bridge.py` and run
-`.venv/bin/python probe.py 4 40 2`. It holds the right stick at 4, 6, … 40%,
+`host/.venv/bin/python host/probe.py 4 40 2`. It holds the right stick at 4, 6, … 40%,
 3 s each. Set `deadzone` about 0.01–0.02 above the first value that turns the camera.
 
 **Calibrating** in Fortnite Creative:
@@ -166,7 +181,6 @@ Match the button layout to [`host/config.toml`](host/config.toml), or the other 
 | Mouse wheel switches weapons the wrong way | macOS *natural scrolling* flips the wheel. Swap `wheel_up` / `wheel_down` in `config.toml` |
 | `config error: …` in the terminal | Typo in `config.toml`. The message names the line. The previous config stays active until you fix it |
 | Pressing a controller button does nothing in Fortnite | Compare `config.toml` with Fortnite's controller layout |
-| `pio` build fails with `No module named 'intelhex'` (Homebrew PlatformIO) | `python3 -m pip install --target $(brew --prefix platformio)/libexec/lib/python3.*/site-packages intelhex` |
 
 ## How it works
 
@@ -205,13 +219,17 @@ other frame. iOS/Fortnite ignore a right stick that holds perfectly still, so
 every update has to carry a slightly different value.
 
 ```
+install.sh                  one-line installer
+start.sh                    starts the bridge
 firmware/
   platformio.ini            pinned toolchain + dependencies
+  requirements.txt          PlatformIO itself (installed into host/.venv)
   src/main.cpp              USB-serial → controller bridge
   lib/ESP32-BLE-Gamepad/    vendored library (MIT), unmodified
 host/
   bridge.py                 Mac capture, bindings, aim
   config.toml               your bindings and aim settings
+  requirements.txt          pinned Python packages
   sweep.py                  hardware test: exercises every input
   probe.py                  measures the game's real right-stick dead zone
 ```
