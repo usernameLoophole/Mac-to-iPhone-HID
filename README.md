@@ -2,55 +2,63 @@
 
 [![CI](https://github.com/usernameLoophole/Mac-to-iPhone-HID/actions/workflows/ci.yml/badge.svg)](https://github.com/usernameLoophole/Mac-to-iPhone-HID/actions/workflows/ci.yml)
 
-Play iPhone games with your Mac's keyboard and mouse. An ESP32-S3 shows up on
-the iPhone as an **Xbox Wireless Controller**. A small Python script on the Mac
-turns key presses and mouse movement into controller input.
+Play iPhone games with your computer's keyboard and mouse. An ESP32-S3 shows up on
+the iPhone as an **Xbox Wireless Controller**. A small Python script on the computer
+(macOS, Linux or Windows) turns key presses and mouse movement into controller input.
 
 Built for Fortnite, which on iOS only accepts touch and game controllers.
 
 ```
-Mac keyboard + mouse ──USB──▶ ESP32-S3 ──Bluetooth LE──▶ iPhone
-   (bridge.py)               (pretends to be an          (sees a normal
-                              Xbox Series controller)     Xbox controller)
+keyboard + mouse ──USB──▶ ESP32-S3 ──Bluetooth LE──▶ iPhone
+  (bridge.py)            (pretends to be an          (sees a normal
+                          Xbox Series controller)     Xbox controller)
 ```
 
 - WASD → left stick, mouse → right stick (aim), keys and mouse buttons → controller buttons
 - Bindings and aim settings live in a text file and reload while you play
-- One hotkey (**Ctrl+Opt+Cmd+K**) switches your keyboard and mouse between the Mac and the iPhone
+- One hotkey switches your keyboard and mouse between the computer and the iPhone
 - No drivers and no jailbreak. The iPhone sees a standard controller.
 
-> **Status:** tested end to end with Fortnite on an iPhone and an ESP32-S3-WROOM-1 (N8R2).
+> **Status:** **macOS** is tested end to end with Fortnite on an iPhone and an
+> ESP32-S3-WROOM-1 (N8R2). **Linux** and **Windows** support is new and not yet
+> tested on real hardware. Please open an issue if something doesn't work.
 
 ## What you need
 
 | | |
 |---|---|
 | Board | An **ESP32-S3** dev board with a native USB port (often labelled `USB`, next to a `UART`/`COM` port). Other ESP32s have no native USB and won't work as-is |
-| Mac | macOS with Python **3.11+** (the installer can get it through Homebrew) |
+| Computer | macOS, Linux (X11 or Wayland) or Windows 10/11, with Python **3.11+** (the installer gets it if missing) |
 | Phone | iPhone (or iPad) that supports Xbox controllers |
-| Cable | USB cable from the Mac to the board's **USB** port |
+| Cable | USB cable from the computer to the board's **USB** port |
 
 ## Installation
 
 ### Quick install
 
-Plug the ESP32-S3 into your Mac, then paste this into Terminal:
+Plug the ESP32-S3 into your computer, then paste one line into a terminal.
 
+**macOS / Linux** (Terminal):
 ```sh
 curl -fsSL https://raw.githubusercontent.com/usernameLoophole/Mac-to-iPhone-HID/main/install.sh | bash
 ```
 
-The script:
-1. Checks for git and Python 3.11+, and installs what's missing.
+**Windows** (PowerShell):
+```powershell
+irm https://raw.githubusercontent.com/usernameLoophole/Mac-to-iPhone-HID/main/install.ps1 | iex
+```
+
+The installer:
+1. Checks for git and Python 3.11+, and installs what's missing (Homebrew, apt/dnf/pacman/zypper, or winget).
 2. Clones the repo into `~/Mac-to-iPhone-HID`.
 3. Creates a private Python environment containing the bridge's packages and PlatformIO.
 4. Runs the self-test.
 5. Offers to flash the firmware. The first build downloads ~500 MB of tools.
-6. Opens the macOS permission pages you need.
+6. Sets up permissions: on macOS it opens the right settings pages, on Linux it adds you to the `input` and `dialout` groups.
 
 Running it again is safe: it updates the folder and skips what's already done.
-Set `INSTALL_DIR=/some/path` to install somewhere else.
-[Read the script](install.sh) before running it if you like. It's short.
+Set `INSTALL_DIR` to install somewhere else. Read [install.sh](install.sh) or
+[install.ps1](install.ps1) before running them if you like. They're short.
 
 `firmware/platformio.ini` is set up for 8 MB flash modules (e.g. `…N8R2`). For a
 4 MB module, delete the two `flash_size`/`partitions` lines and flash again
@@ -66,22 +74,32 @@ host/.venv/bin/pip install -r host/requirements.txt -r firmware/requirements.txt
 host/.venv/bin/python host/bridge.py --selftest     # should print "selftest ok"
 host/.venv/bin/pio run -d firmware -t upload        # flash the ESP32-S3
 ```
+On Windows use `py -3 -m venv host\.venv`, then `host\.venv\Scripts\python.exe` and
+`host\.venv\Scripts\pio.exe` in place of the `bin/` paths.
 
 ### After installing (once)
 
-1. **Permissions:** System Settings → Privacy & Security → turn on **Terminal** under
-   both **Input Monitoring** and **Accessibility**. Then quit and reopen Terminal.
+1. **Permissions**
+   - **macOS:** System Settings → Privacy & Security → turn on **Terminal** under
+     both **Input Monitoring** and **Accessibility**. Then quit and reopen Terminal.
+   - **Linux:** you need to be in the `input` group (to read keyboard and mouse) and the
+     `dialout` group (`uucp` on Arch, for the serial port). The installer adds you.
+     **Log out and back in** afterwards.
+   - **Windows:** nothing to do.
 2. **Pairing:** iPhone → **Settings → Bluetooth** → tap **Xbox Wireless Controller**.
    Afterwards, **Settings → General → Game Controller** should appear.
 
 ## Usage
 
 1. Plug in the board. The iPhone reconnects to it on its own.
-2. In **Terminal.app** (it won't work over SSH):
-   ```sh
-   ~/Mac-to-iPhone-HID/start.sh
-   ```
-3. Press **Ctrl+Opt+Cmd+K** to send keyboard and mouse to the iPhone. Press it again to get them back.
+2. Start the bridge from a terminal on the computer itself (not over SSH):
+   - macOS / Linux: `~/Mac-to-iPhone-HID/start.sh`
+   - Windows: double-click `start.bat` in the install folder, or run it from PowerShell
+3. Press the hotkey to send keyboard and mouse to the iPhone. Press it again to get them back.
+
+   | macOS | Linux | Windows |
+   |---|---|---|
+   | **Ctrl+Opt+Cmd+K** | **Ctrl+Alt+Super+K** | **Ctrl+Alt+Shift+K** |
 
 Quit with Ctrl+C. **If you ever get stuck, unplug the board:** the script exits
 and gives your keyboard and mouse back.
@@ -97,7 +115,7 @@ Everything is in [`host/config.toml`](host/config.toml). Saved changes apply wit
 
 **Default bindings**
 
-| Mac | Controller |
+| Keyboard / mouse | Controller |
 |---|---|
 | W A S D | Left stick |
 | Mouse movement | Right stick |
@@ -110,7 +128,7 @@ Everything is in [`host/config.toml`](host/config.toml). Saved changes apply wit
 | 1 2 3 4 | D-pad ↑ → ↓ ← |
 
 Change them to match your in-game controller layout. The toggle hotkey can be
-changed too (`hotkey = "ctrl+alt+meta+k"`, where meta = Cmd). Controller targets you can
+changed too (`hotkey = "ctrl+alt+meta+k"`, where meta = Cmd / Win / Super). Controller targets you can
 use: `A B X Y LB RB LS RS View Menu Share LT RT DU DD DL DR LS_UP LS_DOWN LS_LEFT LS_RIGHT`.
 
 ## Aim settings
@@ -177,27 +195,36 @@ Match the button layout to [`host/config.toml`](host/config.toml), or the other 
 
 | Problem | Fix |
 |---|---|
-| `Event tap failed` | Grant Terminal **Input Monitoring + Accessibility**, then restart Terminal |
-| `ESP32 not found` | Use the board's **USB** port, not UART. Check with `ls /dev/cu.usbmodem*` |
+| `Event tap failed` (macOS) | Grant Terminal **Input Monitoring + Accessibility**, then restart Terminal |
+| `No access to /dev/input/…` (Linux) | `sudo usermod -aG input $USER`, then log out and back in |
+| `Permission denied` on the serial port (Linux) | `sudo usermod -aG dialout $USER` (`uucp` on Arch), then log out and back in |
+| Input not captured while some app is focused (Windows) | That app runs as administrator. Windows hides its input from normal programs. Run `start.bat` as administrator too |
+| `Raw Input unavailable…` (Windows) | Aim still works, but uses the cursor movement, which Windows' *Enhance pointer precision* distorts. Turn that off in the mouse settings |
+| `ESP32 not found` | Use the board's **USB** port, not UART. The bridge looks for Espressif's USB ID (`303A`). Or pass the port yourself: `start.sh /dev/ttyACM0`, `start.bat COM5` |
 | Game Center overlay keeps popping up | Something is pressing the **Xbox/Guide** button. Don't bind `Guide` |
 | iPhone doesn't reconnect | Settings → Bluetooth → tap the controller. If that fails: *Forget This Device*, then pair again |
+| Aim speed differs from another computer | Mouse movement is measured differently on each OS (macOS applies acceleration first). Re-tune `full_speed` |
 | Mouse wheel switches weapons the wrong way | macOS *natural scrolling* flips the wheel. Swap `wheel_up` / `wheel_down` in `config.toml` |
 | `config error: …` in the terminal | Typo in `config.toml`. The message names the line. The previous config stays active until you fix it |
 | Pressing a controller button does nothing in Fortnite | Compare `config.toml` with Fortnite's controller layout |
 
 ## How it works
 
-- **`host/capture/`** reads keyboard and mouse, one file per OS. On macOS it's an
-  event tap. While forwarding is on, it hides the input from the Mac and freezes the cursor.
+- **`host/capture/`** reads keyboard and mouse, one file per OS. While forwarding is on,
+  it hides the input from the computer and freezes the cursor:
+  - **macOS:** event tap.
+  - **Linux:** reads `/dev/input` directly and takes exclusive control of the devices.
+  - **Windows:** low-level hooks, plus Raw Input for mouse movement.
+  Each maps its key codes by physical position, so WASD stays WASD on any keyboard layout.
 - **`host/bridge.py`** is the OS-independent core: bindings, hotkey and aim. Every 8 ms
   it sends the **whole controller state** as one 15-byte message over USB serial.
 - **`firmware/`** (ESP32-S3) reads those messages and sends them to the iPhone
   as a Bluetooth controller. It uses the Xbox Series X mode of
   [ESP32-BLE-Gamepad](https://github.com/lemmingDev/ESP32-BLE-Gamepad). If
   messages stop for 200 ms, it returns every input to neutral, so nothing gets
-  stuck when the Mac side dies.
+  stuck when the computer side dies.
 
-### Serial protocol (Mac → ESP32)
+### Serial protocol (computer → ESP32)
 
 One 15-byte message per 8 ms, little-endian, always carrying the whole controller state:
 
@@ -223,8 +250,8 @@ other frame. iOS/Fortnite ignore a right stick that holds perfectly still, so
 every update has to carry a slightly different value.
 
 ```
-install.sh                  one-line installer
-start.sh                    starts the bridge
+install.sh / install.ps1    one-line installers (macOS+Linux / Windows)
+start.sh / start.bat        start the bridge
 firmware/
   platformio.ini            pinned toolchain + dependencies
   requirements.txt          PlatformIO itself (installed into host/.venv)
@@ -232,7 +259,7 @@ firmware/
   lib/ESP32-BLE-Gamepad/    vendored library (MIT), unmodified
 host/
   bridge.py                 core: bindings, aim, hotkey, sending (OS-independent)
-  capture/macos.py          macOS keyboard/mouse capture (one file per OS)
+  capture/                  keyboard/mouse capture: macos.py, linux.py, windows.py
   config.toml               your bindings and aim settings
   requirements.txt          pinned Python packages
   sweep.py                  hardware test: exercises every input

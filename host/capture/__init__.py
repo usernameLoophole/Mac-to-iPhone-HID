@@ -14,6 +14,10 @@ import sys
 def load():
     if sys.platform == "darwin":
         from . import macos as backend
+    elif sys.platform.startswith("linux"):
+        from . import linux as backend
+    elif sys.platform == "win32":
+        from . import windows as backend
     else:
-        sys.exit(f"{sys.platform} is not supported yet (macOS only for now).")
+        sys.exit(f"{sys.platform} is not supported (macOS, Linux and Windows are).")
     return backend

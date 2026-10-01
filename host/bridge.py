@@ -163,8 +163,10 @@ def selftest():
             raise AssertionError(bad)
         except ValueError:
             pass
-    from capture import macos  # every backend must map onto the shared key names
-    assert set(macos.KEYCODES) <= KEY_NAMES and len(set(macos.KEYCODES.values())) == len(macos.KEYCODES)
+    from capture import linux, macos, windows  # tables only: importable on any OS
+    for backend in (linux, macos, windows):  # each maps every shared key name, no duplicate codes
+        assert set(backend.KEYCODES) == KEY_NAMES, (backend.__name__, set(backend.KEYCODES) ^ KEY_NAMES)
+        assert len(set(backend.KEYCODES.values())) == len(backend.KEYCODES), backend.__name__
     print("selftest ok")
 
 

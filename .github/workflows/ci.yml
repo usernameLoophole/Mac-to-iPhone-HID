@@ -10,3 +10,37 @@ jobs:
         run: REPO_URL="$GITHUB_WORKSPACE" INSTALL_DIR="$RUNNER_TEMP/inst" NONINTERACTIVE=1 bash install.sh
       - name: Firmware build
         run: '"$RUNNER_TEMP/inst/host/.venv/bin/pio" run -d "$RUNNER_TEMP/inst/firmware"'
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer (non-interactive, also runs the selftest)
+        run: REPO_URL="$GITHUB_WORKSPACE" INSTALL_DIR="$RUNNER_TEMP/inst" NONINTERACTIVE=1 bash install.sh
+      - name: Device discovery smoke test
+        working-directory: host
+        run: python3 -c "from capture import linux; print(linux.find_devices())"
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer (Windows PowerShell 5.1, like most users)
+        shell: powershell
+        run: |
+          $env:REPO_URL = $env:GITHUB_WORKSPACE
+          $env:INSTALL_DIR = Join-Path $env:RUNNER_TEMP "inst"
+          $env:NONINTERACTIVE = "1"
+          ./install.ps1
+      - name: Hook smoke test (installs hooks + Raw Input, quits after 2 s)
+        continue-on-error: true  # CI runners may have no interactive desktop
+        working-directory: host
+        shell: python
+        run: |
+          import ctypes, sys, threading
+          sys.path.insert(0, ".")
+          from capture import windows
+          tid = ctypes.windll.kernel32.GetCurrentThreadId()
+          threading.Timer(2, lambda: ctypes.windll.user32.PostThreadMessageW(tid, 0x12, 0, 0)).start()
+          windows.run(lambda *a: False)
+          print("hooks installed and removed cleanly")
